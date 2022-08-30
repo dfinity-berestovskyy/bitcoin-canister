@@ -59,6 +59,8 @@ fn set_state(state: State) {
 
 /// Initializes the state of the Bitcoin canister.
 pub fn init(payload: InitPayload) {
+    ic_cdk::setup();
+
     set_state(State::new(
         payload
             .stability_threshold
@@ -88,6 +90,7 @@ pub fn pre_upgrade() {
 }
 
 pub fn post_upgrade() {
+    //ic_cdk::setup(); should we do this here?
     let memory = memory::get_upgrades_memory();
 
     // Read the length of the state bytes.

@@ -11,7 +11,9 @@ use bitcoin::Block;
 ///
 /// The heartbeat fetches new blocks from the bitcoin network and inserts them into the state.
 pub async fn heartbeat() {
+    print("starting heartbeat");
     if ingest_stable_blocks_into_utxoset() {
+        print("ingested blocks into utxo set. done");
         // Exit the heartbeat if stable blocks had been ingested.
         // This is a precaution to not exceed the instructions limit.
         return;
@@ -24,10 +26,12 @@ pub async fn heartbeat() {
     });
 
     if should_fetch_blocks {
+        print("fetching blocks");
         return fetch_blocks().await;
     }
 
     maybe_process_response();
+    print("done");
 }
 
 async fn fetch_blocks() {
@@ -43,7 +47,7 @@ async fn fetch_blocks() {
     let response: Result<(GetSuccessorsResponse,), _> =
         call_get_successors(with_state(|s| s.blocks_source), request).await;
 
-    print(&format!("Received response: {:?}", response));
+    print(&format!("Received response")); //: {:?}", response));
 
     // Release the heartbeat lock and save the response.
     with_state_mut(|s| {
@@ -70,6 +74,7 @@ fn maybe_process_response() {
     with_state_mut(|state| {
         let response_to_process = state.syncing_state.response_to_process.take();
         if let Some(response) = response_to_process {
+            print("processing response");
             let blocks = response.blocks;
             for block in blocks.into_iter() {
                 // TODO(EXC-1215): Gracefully handle the errors here.
@@ -106,6 +111,7 @@ mod test {
         state::PartialStableBlock,
         test_utils::random_p2pkh_address,
         types::{BlockBlob, Network},
+        utxoset::TxProgress,
     };
     use bitcoin::{
         blockdata::constants::genesis_block, consensus::Encodable, Address, Block, BlockHeader,
@@ -216,6 +222,7 @@ mod test {
 
         // Ingest stable blocks.
         runtime::performance_counter_reset();
+        println!("running heartbeat");
         heartbeat().await;
 
         // Assert that execution has been paused.
@@ -224,7 +231,11 @@ mod test {
             with_state(|s| s.syncing_state.partial_stable_block.clone().unwrap()),
             PartialStableBlock {
                 block: block_1.clone(),
-                txs_processed: 3
+                txs_processed: 3,
+                tx_progress: TxProgress {
+                    next_input_idx: 1,
+                    next_output_idx: 0
+                }
             }
         );
 
@@ -237,7 +248,11 @@ mod test {
             with_state(|s| s.syncing_state.partial_stable_block.clone().unwrap()),
             PartialStableBlock {
                 block: block_1,
-                txs_processed: 7
+                txs_processed: 7,
+                tx_progress: TxProgress {
+                    next_input_idx: 1,
+                    next_output_idx: 0
+                }
             }
         );
 

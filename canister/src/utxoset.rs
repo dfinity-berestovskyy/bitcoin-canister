@@ -1,12 +1,16 @@
 use crate::address_utxoset::AddressUtxoSet;
 use crate::{
+    runtime::performance_counter,
     state::UtxoSet,
     types::{OutPoint, Storable},
 };
 use bitcoin::{Address, Script, Transaction, TxOut, Txid};
+use ic_btc_types::Height;
 use std::str::FromStr;
 
-type Height = u32;
+// The threshold at which time slicing kicks in.
+// At the time of this writing it is equivalent to 80% of the maximum instructions limit.
+const MAX_INSTRUCTIONS_THRESHOLD: u64 = 4_000_000_000;
 
 lazy_static::lazy_static! {
     static ref DUPLICATE_TX_IDS: [Vec<u8>; 2] = [
@@ -20,19 +24,89 @@ pub fn get_utxos<'a>(utxo_set: &'a UtxoSet, address: &'a str) -> AddressUtxoSet<
     AddressUtxoSet::new(address.to_string(), utxo_set)
 }
 
+pub enum Slicing {
+    Paused(TxProgress),
+    Done,
+}
+
+#[derive(Eq, PartialEq, Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct TxProgress {
+    pub next_input_idx: usize,
+    pub next_output_idx: usize,
+}
+
 /// Inserts a transaction into the given UTXO set at the given height.
-pub fn insert_tx(utxo_set: &mut UtxoSet, tx: &Transaction, height: Height) {
+pub fn insert_tx(utxo_set: &mut UtxoSet, tx: &Transaction, height: Height) -> Slicing {
+    todo!();
+    /*crate::runtime::print(&format!(
+        "inserting tx at height {}: ({} inputs, {} outputs)",
+        height,
+        tx.input.len(),
+        tx.output.len()
+    ));
+
     remove_spent_txs(utxo_set, tx);
-    insert_unspent_txs(utxo_set, tx, height);
+    insert_unspent_txs(utxo_set, tx, height);*/
+
+    Slicing::Done
+}
+
+pub fn insert_tx_with_slicing(
+    utxo_set: &mut UtxoSet,
+    tx: &Transaction,
+    height: Height,
+    inputs_processed: usize,
+    outputs_processed: usize,
+) -> Slicing {
+    crate::runtime::print(&format!(
+        "inserting tx at height {}: ({} inputs, {} outputs)",
+        height,
+        tx.input.len(),
+        tx.output.len()
+    ));
+
+    match remove_spent_txs(utxo_set, tx, inputs_processed) {
+        RemoveSpentSlicing::Paused(input_idx) => {
+            return Slicing::Paused(TxProgress {
+                next_input_idx: input_idx,
+                next_output_idx: 0,
+            });
+        }
+        RemoveSpentSlicing::Done => {
+            if let RemoveSpentSlicing::Paused(output_idx) =
+                insert_unspent_txs(utxo_set, tx, height, outputs_processed)
+            {
+                return Slicing::Paused(TxProgress {
+                    next_input_idx: tx.input.len(), // no need for this field in this case.
+                    next_output_idx: output_idx,
+                });
+            }
+        }
+    }
+
+    Slicing::Done
+}
+
+enum RemoveSpentSlicing {
+    Paused(usize),
+    Done,
 }
 
 // Iterates over transaction inputs and removes spent outputs.
-fn remove_spent_txs(utxo_set: &mut UtxoSet, tx: &Transaction) {
+fn remove_spent_txs(
+    utxo_set: &mut UtxoSet,
+    tx: &Transaction,
+    inputs_processed: usize,
+) -> RemoveSpentSlicing {
     if tx.is_coin_base() {
-        return;
+        return RemoveSpentSlicing::Done;
     }
 
-    for input in &tx.input {
+    for (input_idx, input) in tx.input.iter().enumerate().skip(inputs_processed) {
+        if performance_counter() > MAX_INSTRUCTIONS_THRESHOLD {
+            return RemoveSpentSlicing::Paused(input_idx);
+        }
+
         // Remove the input from the UTXOs. The input *must* exist in the UTXO set.
         match utxo_set.utxos.remove(&(&input.previous_output).into()) {
             Some((txout, height)) => {
@@ -57,12 +131,23 @@ fn remove_spent_txs(utxo_set: &mut UtxoSet, tx: &Transaction) {
             }
         }
     }
+
+    RemoveSpentSlicing::Done
 }
 
 // Iterates over transaction outputs and adds unspents.
-fn insert_unspent_txs(utxo_set: &mut UtxoSet, tx: &Transaction, height: Height) {
-    for (vout, output) in tx.output.iter().enumerate() {
+fn insert_unspent_txs(
+    utxo_set: &mut UtxoSet,
+    tx: &Transaction,
+    height: Height,
+    outputs_processed: usize,
+) -> RemoveSpentSlicing {
+    for (vout, output) in tx.output.iter().enumerate().skip(outputs_processed) {
         if !(output.script_pubkey.is_provably_unspendable()) {
+            if performance_counter() > MAX_INSTRUCTIONS_THRESHOLD {
+                return RemoveSpentSlicing::Paused(vout);
+            }
+
             insert_utxo(
                 utxo_set,
                 OutPoint::new(tx.txid().to_vec(), vout as u32),
@@ -71,6 +156,8 @@ fn insert_unspent_txs(utxo_set: &mut UtxoSet, tx: &Transaction, height: Height) 
             );
         }
     }
+
+    RemoveSpentSlicing::Done
 }
 
 // Inserts a UTXO at a given height into the given UTXO set.

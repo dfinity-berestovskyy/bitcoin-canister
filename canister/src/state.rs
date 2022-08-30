@@ -146,6 +146,7 @@ pub struct PartialStableBlock {
     #[serde(deserialize_with = "crate::serde::deserialize_block")]
     pub block: Block,
     pub txs_processed: usize,
+    pub tx_progress: crate::utxoset::TxProgress,
 }
 
 fn init_address_outpoints() -> StableBTreeMap<RestrictedMemory<DefaultMemoryImpl>, Vec<u8>, Vec<u8>>
