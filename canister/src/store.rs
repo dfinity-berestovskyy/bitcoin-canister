@@ -299,7 +299,7 @@ mod test {
         let mut blk_file = BufReader::new(
             File::open(
                 PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-                    .join("test-data/10k_blocks_testnet.dat"),
+                    .join("test-data/testnet_blocks.dat"),
             )
             .unwrap(),
         );
@@ -595,7 +595,8 @@ mod test {
     fn process_100k_blocks() {
         let mut state = State::new(10, Network::Testnet, genesis_block(BitcoinNetwork::Testnet));
 
-        process_chain(&mut state, 5_000);
+
+        process_chain(&mut state, 60_000);
 
         /*let mut total_supply = 0;
         for (_, (v, _)) in state.utxos.utxos.iter() {

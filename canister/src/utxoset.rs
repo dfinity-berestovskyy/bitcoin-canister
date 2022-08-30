@@ -59,7 +59,8 @@ pub fn insert_tx_with_slicing(
     outputs_processed: usize,
 ) -> Slicing {
     crate::runtime::print(&format!(
-        "inserting tx at height {}: ({} inputs, {} outputs)",
+        "inserting tx {}, at height {}: ({} inputs, {} outputs)",
+        tx.txid(),
         height,
         tx.input.len(),
         tx.output.len()
