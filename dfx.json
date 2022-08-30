@@ -1,5 +1,5 @@
 {
-  "dfx": "0.11.1",
+  "dfx": "0.9.1-268-g08d7bd94-dirty",
   "canisters": {
     "bitcoin": {
       "type": "custom",
@@ -17,6 +17,11 @@
   "defaults": {
     "build": {
       "packtool": ""
+    },
+    "bitcoin": {
+      "enabled": true,
+      "nodes": ["127.0.0.1:18444"],
+      "log_level": "info"
     }
   },
   "networks": {

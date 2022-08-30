@@ -23,14 +23,14 @@ thread_local! {
 }
 
 // A memory used for storing bits of the state during updates.
-const UPGRADES_MEMORY: Range<u64> = 0..1_000;
+const UPGRADES_MEMORY: Range<u64> = 0..1000;
 
 // Memories for stable structures.
 // NOTE: The sizes specified below are for testing purposes and are
 //       insufficient for production.
-const ADDRESS_OUTPOINTS: Range<u64> = 1_000..2_000;
-const UTXOS_SMALL: Range<u64> = 2_000..3_000;
-const UTXOS_MEDIUM: Range<u64> = 4_000..5_000;
+const ADDRESS_OUTPOINTS: Range<u64> = 10_000..140_000;
+const UTXOS_SMALL: Range<u64> = 140_000..270_000;
+const UTXOS_MEDIUM: Range<u64> = 1_000..10_000;
 
 pub fn get_upgrades_memory() -> RestrictedMemory<DefaultMemoryImpl> {
     RestrictedMemory::new(get_memory(), UPGRADES_MEMORY)
