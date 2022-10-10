@@ -86,7 +86,6 @@ impl OutPointsCache {
         //    referenced by the unstable blocks.
         for tx in block.txdata() {
             for input in tx.input() {
-                println!("inserting input");
                 if input.previous_output.is_null() {
                     continue;
                 }

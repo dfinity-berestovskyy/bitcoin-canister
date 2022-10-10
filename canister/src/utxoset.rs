@@ -88,10 +88,10 @@ fn ingest_block_helper(
     }
 
     stats.ins_total += performance_counter() - ins_start;
-    print(&format!(
+    /*print(&format!(
         "[INSTRUCTION COUNT] Ingest Block {}: {:?}",
         utxo_set.next_height, stats
-    ));
+    ));*/
 
     // Block ingestion complete.
     utxo_set.next_height += 1;

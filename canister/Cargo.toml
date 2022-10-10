@@ -25,9 +25,9 @@ serde_bytes = "0.11"
 name = "canister"
 path = "src/main.rs"
 
-#[[example]]
-#name = "build-utxo-set"
-#path = "src/examples/build_utxo_set.rs"
+[[example]]
+name = "build-utxo-set"
+path = "src/examples/build_utxo_set.rs"
 
 #[[example]]
 #name = "explore-utxos"
@@ -36,7 +36,9 @@ path = "src/main.rs"
 [dev-dependencies]
 async-std = { version = "1.12.0", features = ["attributes"] }
 bitcoin = {version = "0.28.1", features = ["rand"]} # needed for generating secp256k1 keys.
+clap = { version = "4.0.11", features = ["derive"] }
 ic-btc-test-utils = { git = "https://github.com/dfinity/ic", rev = "0acc04638bb2be562c146c2480e6217eb572aa77" }
 maplit = "1.0.2"
 proptest = "0.9.4"
+rusty-leveldb = "1.0.4"
 tempfile = "3.2.0"

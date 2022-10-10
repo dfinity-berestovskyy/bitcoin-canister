@@ -13,8 +13,10 @@ const MEDIUM_UTXOS: MemoryId = MemoryId::new(3);
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
+    pub static MEMORY: DefaultMemoryImpl = DefaultMemoryImpl::default();
+
     static MEMORY_MANAGER: MemoryManager<DefaultMemoryImpl>
-        = MemoryManager::init(DefaultMemoryImpl::default());
+        = MemoryManager::init(MEMORY.with(|m| m.clone()));
 }
 
 pub fn get_upgrades_memory() -> Memory {

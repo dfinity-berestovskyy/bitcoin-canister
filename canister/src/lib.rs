@@ -2,8 +2,8 @@ mod address_utxoset;
 mod api;
 mod blocktree;
 mod heartbeat;
-mod memory;
-mod runtime;
+pub mod memory;
+pub mod runtime;
 pub mod state;
 #[cfg(test)]
 mod test_utils;
