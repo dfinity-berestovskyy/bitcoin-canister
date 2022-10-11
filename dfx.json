@@ -12,6 +12,12 @@
       "candid": "./e2e-tests/management-canister-mock/candid.did",
       "package": "management-canister-mock",
       "wasm": "./target/wasm32-unknown-unknown/release/management-canister-mock.wasm"
+    },
+    "uploader": {
+      "type": "custom",
+      "candid": "./uploader/candid.did",
+      "wasm": "./target/wasm32-unknown-unknown/release/uploader-canister.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --release --bin uploader-canister --locked"
     }
   },
   "defaults": {

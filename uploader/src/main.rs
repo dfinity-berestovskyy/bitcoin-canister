@@ -16,7 +16,7 @@ fn init(initial_size: u64) {
 }
 
 #[update]
-fn write(page_start: u64, blob: Vec<u8>) {
+fn write(page_start: u64, bytes: Vec<u8>) {
     // TODO: check if controller
     // TODO: check overflow?
 
@@ -26,20 +26,20 @@ fn write(page_start: u64, blob: Vec<u8>) {
 
     let expected_end_page = min(page_start + 31, stable::stable64_size());
 
-    let expected_blob_length = ((expected_end_page - page_start) * PAGE_SIZE) as usize;
+    let expected_bytes_length = ((expected_end_page - page_start) * PAGE_SIZE) as usize;
 
-    if expected_blob_length != blob.len() {
+    if expected_bytes_length != bytes.len() {
         panic!(
-            "expected blob to be {} bytes but found {} bytes",
-            expected_blob_length,
-            blob.len()
+            "expected bytes to be {} bytes but found {} bytes",
+            expected_bytes_length,
+            bytes.len()
         );
     }
 
     let offset = page_start * PAGE_SIZE;
 
-    // Write blobs of 31 pages.
-    stable::stable64_write(offset, &blob);
+    // Write bytes of 31 pages.
+    stable::stable64_write(offset, &bytes);
 
     MISSING_RANGES.with(|mr| mr.borrow_mut().remove(&page_start));
 }
