@@ -3,5 +3,6 @@
 members = [
     "canister",
     "e2e-tests/management-canister-mock",
+    "uploader",
 ]
 
