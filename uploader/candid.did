@@ -1,0 +1,6 @@
+service: (nat64) -> {
+  write: (page_start: nat64, bytes: blob) -> ();
+
+  get_missing_range: () -> (vec nat64) query;
+}
+
